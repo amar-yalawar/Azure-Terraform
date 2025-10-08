@@ -1,0 +1,13 @@
+project       = "vci"
+env           = "dev"
+location      = "Central India"
+vm_base_name  = "adoappvm"
+vm_size       = "Standard_B1s"
+admin_username = "azureuser"
+admin_password = "DevOps@2025!"
+vm_count        = 2
+sla             = "basic"
+supported_by     = "unix_buildcc"
+owned_by         = "unix-buildcc-team"
+managed_by      = "group_function"
+state            = "Being Assembled"
