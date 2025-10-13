@@ -1,0 +1,55 @@
+trigger: none
+
+pool:
+  name: 'Default'
+
+variables:
+  tfWorkingDir: 'master-repo/VMSS'
+  group: TerraformSecrets
+
+stages:
+- stage: Destroy
+  jobs:
+  - job: TerraformDestroy
+    steps:
+    - task: TerraformTask@5
+      displayName: Terraform init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
+        backendServiceArm: 'Pay-As-You-Go(72b3064e-886c-4c1a-96ca-f29aec41150b)'
+        backendAzureRmResourceGroupName: 'ado_tfstate_rg'
+        backendAzureRmStorageAccountName: 'adotfstatestorageacc'
+        backendAzureRmContainerName: 'adotfstatecontainer'
+        backendAzureRmKey: 'octvmss.devpoc.tfstate'
+
+    - task: TerraformTask@5
+      displayName: Terraform validate
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
+
+    - task: TerraformTask@5
+      displayName: Terraform plan (destroy)
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
+        environmentServiceNameAzureRM: 'Pay-As-You-Go(72b3064e-886c-4c1a-96ca-f29aec41150b)'
+        commandOptions: >
+            -destroy
+            -var-file=platform.tfvars
+
+    - task: TerraformTask@5
+      displayName: Terraform Destroy
+      inputs:
+        provider: 'azurerm'
+        command: 'destroy'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
+        environmentServiceNameAzureRM: 'Pay-As-You-Go(72b3064e-886c-4c1a-96ca-f29aec41150b)'
+        commandOptions: >
+          -auto-approve
+          -var-file=platform.tfvars
+

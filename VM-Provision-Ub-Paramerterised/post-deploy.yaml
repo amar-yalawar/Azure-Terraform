@@ -1,0 +1,30 @@
+#cloud-config
+package_update: true
+packages:
+  - nginx
+  - mysql-server
+
+runcmd:
+  # --- Format & Mount Disk ---
+  - 'while [ ! -b /dev/sdc ]; do sleep 1; done'
+  - 'blkid /dev/sdc || mkfs.ext4 /dev/sdc'
+  - 'mkdir -p /data'
+  - 'grep -q "/dev/sdc" /etc/fstab || echo "/dev/sdc /data ext4 defaults,nofail 0 2" >> /etc/fstab'
+  - 'mount -a'
+
+  # --- Setup Nginx ---
+  - mkdir -p /data/nginx/html
+  - echo "<h1>Nginx POC just launched. Happy Learning! Stay tuned for next hands-on sessions on ado automation and configuration on azure!</h1>" > /data/nginx/html/index.html
+  - chown -R www-data:www-data /data/nginx
+  - sed -i 's|root /var/www/html;|root /data/nginx/html;|' /etc/nginx/sites-available/default
+  - systemctl enable nginx
+  - systemctl restart nginx
+
+  # --- Setup MySQL ---
+  - mkdir -p /data/mysql
+  - chown -R mysql:mysql /data/mysql
+  - systemctl stop mysql || true
+  - sed -i 's|^datadir.*|datadir = /data/mysql|' /etc/mysql/mysql.conf.d/mysqld.cnf
+  - mysqld --initialize-insecure --user=mysql --datadir=/data/mysql
+  - systemctl enable mysql
+  - systemctl start mysql

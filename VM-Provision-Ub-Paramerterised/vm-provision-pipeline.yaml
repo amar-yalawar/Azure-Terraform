@@ -1,0 +1,135 @@
+trigger: none
+
+parameters:
+  - name: subscriptionId
+    type: string
+    default: '72b3064e-886c-4c1a-96ca-f29aec41150b'
+  - name: location
+    type: string
+    default: 'Central India'
+  - name: vmBaseName
+    type: string
+    default: 'adoappvm'
+  - name: vmCount
+    type: number
+    default: 2
+  - name: vmSize
+    type: string
+    default: 'Standard_B1s'
+  - name: adminUsername
+    type: string
+    default: 'azureuser'
+  - name: adminPassword
+    type: string
+    default: 'DevOps@2025!' # Use secret variable group in production
+  - name: project
+    type: string
+    default: 'vci'
+  - name: env
+    type: string
+    default: 'dev'
+  - name: sla
+    type: string
+    default: 'basic'
+  - name: supportedBy
+    type: string
+    default: 'unix_buildcc'
+  - name: ownedBy
+    type: string
+    default: 'unix-buildcc-team'
+  - name: managedBy
+    type: string
+    default: 'group_function'
+  - name: state
+    type: string
+    default: 'Being Assembled'
+
+pool:
+  name: 'Default'
+
+variables:
+  tfWorkingDir: 'master-repo/VMSS'
+  group: TerraformSecrets
+  tfStateKey: 'vmss.${{ parameters.env }}.tfstate'
+
+
+stages:
+- stage: Provision
+  jobs:
+  - job: Terraform
+    steps:
+
+    - task: AzureCLI@2
+      displayName: 'Set Azure Subscription'
+      inputs:
+        azureSubscription: 'Pay-As-You-Go'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az account set --subscription ${{ parameters.subscriptionId }}
+
+    - task: TerraformTask@5
+      displayName: Terraform init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
+        backendServiceArm: 'Pay-As-You-Go'
+        backendAzureRmResourceGroupName: 'ado_tfstate_rg'
+        backendAzureRmStorageAccountName: 'adotfstatestorageacc'
+        backendAzureRmContainerName: 'adotfstatecontainer'
+        backendAzureRmKey: '$(tfStateKey)'
+
+    - task: TerraformTask@5
+      displayName: Terraform validate
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
+
+    - task: TerraformTask@5
+      displayName: Terraform plan
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
+        environmentServiceNameAzureRM: 'Pay-As-You-Go'
+        commandOptions: >
+          -var="subscription_id=${{ parameters.subscriptionId }}"
+          -var="project=${{ parameters.project }}"
+          -var="env=${{ parameters.env }}"
+          -var="location=${{ parameters.location }}"
+          -var="vm_base_name=${{ parameters.vmBaseName }}"
+          -var="vm_count=${{ parameters.vmCount }}"
+          -var="vm_size=${{ parameters.vmSize }}"
+          -var="admin_username=${{ parameters.adminUsername }}"
+          -var="admin_password=${{ parameters.adminPassword }}"
+          -var="sla=${{ parameters.sla }}"
+          -var="supported_by=${{ parameters.supportedBy }}"
+          -var="owned_by=${{ parameters.ownedBy }}"
+          -var="managed_by=${{ parameters.managedBy }}"
+          -var="state=${{ parameters.state }}"
+
+    - task: TerraformTask@5
+      displayName: Terraform apply
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
+        environmentServiceNameAzureRM: 'Pay-As-You-Go'
+        commandOptions: >
+          -auto-approve
+          -var="subscription_id=${{ parameters.subscriptionId }}"
+          -var="project=${{ parameters.project }}"
+          -var="env=${{ parameters.env }}"
+          -var="location=${{ parameters.location }}"
+          -var="vm_base_name=${{ parameters.vmBaseName }}"
+          -var="vm_count=${{ parameters.vmCount }}"
+          -var="vm_size=${{ parameters.vmSize }}"
+          -var="admin_username=${{ parameters.adminUsername }}"
+          -var="admin_password=${{ parameters.adminPassword }}"
+          -var="sla=${{ parameters.sla }}"
+          -var="supported_by=${{ parameters.supportedBy }}"
+          -var="owned_by=${{ parameters.ownedBy }}"
+          -var="managed_by=${{ parameters.managedBy }}"
+          -var="state=${{ parameters.state }}"
