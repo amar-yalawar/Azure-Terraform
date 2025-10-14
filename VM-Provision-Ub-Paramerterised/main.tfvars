@@ -1,0 +1,7 @@
+admin_username = "azureuser"
+admin_password = "DevOps@2025!"
+supported_by   = "unix_buildcc"
+owned_by       = "unix-buildcc-team"
+managed_by     = "group_function"
+status          = "Being Assembled"
+service_class            = "basic"

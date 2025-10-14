@@ -15,9 +15,9 @@ resource "azurerm_resource_group" "rg" {
     environment  = var.env
     supported_by = var.supported_by
     owned_by     = var.owned_by
-    sla          = var.sla
+    service_class          = var.service_class
     managed_by   = var.managed_by
-    state        = var.state
+    status        = var.state
   }
 }
 

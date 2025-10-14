@@ -64,7 +64,12 @@ variable "managed_by" {
   description = "Managing team or function"
 }
 
-variable "state" {
+variable "status" {
   type        = string
-  description = "Deployment state or lifecycle tag"
+  description = "Server status"
+}
+
+variable "service_class" {
+  type        = string
+  description = "Service class"
 }

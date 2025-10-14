@@ -1,17 +1,31 @@
 trigger: none
 
+extends:
+  template: parameters.yml
+
 pool:
   name: 'Default'
 
 variables:
-  tfWorkingDir: 'master-repo/VMSS'
+  tfWorkingDir: 'master-repo/VM-Setup-Paramerised'
   group: TerraformSecrets
+  tfStateKey: 'vmss.${{ parameters.env }}.tfstate'
 
 stages:
 - stage: Destroy
   jobs:
   - job: TerraformDestroy
     steps:
+
+    - task: AzureCLI@2
+      displayName: 'Set Azure Subscription'
+      inputs:
+        azureSubscription: 'Pay-As-You-Go(72b3064e-886c-4c1a-96ca-f29aec41150b)'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az account set --subscription ${{ parameters.subscriptionId }}
+
     - task: TerraformTask@5
       displayName: Terraform init
       inputs:
@@ -20,36 +34,4 @@ stages:
         workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
         backendServiceArm: 'Pay-As-You-Go(72b3064e-886c-4c1a-96ca-f29aec41150b)'
         backendAzureRmResourceGroupName: 'ado_tfstate_rg'
-        backendAzureRmStorageAccountName: 'adotfstatestorageacc'
-        backendAzureRmContainerName: 'adotfstatecontainer'
-        backendAzureRmKey: 'octvmss.devpoc.tfstate'
-
-    - task: TerraformTask@5
-      displayName: Terraform validate
-      inputs:
-        provider: 'azurerm'
-        command: 'validate'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
-
-    - task: TerraformTask@5
-      displayName: Terraform plan (destroy)
-      inputs:
-        provider: 'azurerm'
-        command: 'plan'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
-        environmentServiceNameAzureRM: 'Pay-As-You-Go(72b3064e-886c-4c1a-96ca-f29aec41150b)'
-        commandOptions: >
-            -destroy
-            -var-file=platform.tfvars
-
-    - task: TerraformTask@5
-      displayName: Terraform Destroy
-      inputs:
-        provider: 'azurerm'
-        command: 'destroy'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/$(tfWorkingDir)'
-        environmentServiceNameAzureRM: 'Pay-As-You-Go(72b3064e-886c-4c1a-96ca-f29aec41150b)'
-        commandOptions: >
-          -auto-approve
-          -var-file=platform.tfvars
-
+        backendAzureRmStorageAccount

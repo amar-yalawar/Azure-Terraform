@@ -1,0 +1,17 @@
+parameters:
+  - name: subscriptionId
+    type: string
+  - name: location
+    type: string
+  - name: vmBaseName
+    type: string
+  - name: vmCount
+    type: number
+  - name: vmSize
+    type: string
+  - name: business_class
+    type: string
+  - name: env
+    type: string
+    default: 'dev'
+
